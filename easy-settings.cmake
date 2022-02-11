@@ -19,6 +19,9 @@
 # ../griddle --PLATFORM=sabre --SIMULATION
 # ninja
 #
+
+# asdasdasdassd
+
 set(RELEASE ON CACHE BOOL "Performance optimized build")
 set(PLATFORM "x86_64" CACHE STRING "Platform to test")
 set(FASTPATH ON CACHE BOOL "Turn fastpath on or off")
