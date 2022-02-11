@@ -52,7 +52,7 @@ jobs:
 
   hw-run:
     name: HW Run
-    if: ${{ github.repository_owner == 'seL4' &&
+    if: ${{ github.repository_owner == 'axel-h' &&
             github.event_name == 'pull_request_target' &&
             ((github.event.action != 'labeled' &&
               contains(github.event.pull_request.labels.*.name, 'hw-test')) ||
@@ -103,9 +103,9 @@ jobs:
           index: $${{ strategy.job-index }}
         env:
           HW_SSH: ${{ secrets.HW_SSH }}
-      - name: Upload results
-        uses: actions/upload-artifact@v4
-        with:
-          # funky expression below is to work around lack of ternary operator
-          name: sel4bench-results-${{ matrix.platform }}${{ matrix.req != '' && format('-{0}', matrix.req) || '' }}
-          path: '*.json'
+      #- name: Upload results
+      #  uses: actions/upload-artifact@v2
+      #  with:
+      #    # funky expression below is to work around lack of ternary operator
+      #    name: sel4bench-results-${{ matrix.platform }}${{ matrix.req != '' && format('-{0}', matrix.req) || '' }}
+      #    path: '*.json'
