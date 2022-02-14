@@ -24,7 +24,7 @@ jobs:
       xml: ${{ steps.repo.outputs.xml }}
     steps:
     - id: repo
-      uses: seL4/ci-actions/repo-checkout@master
+      uses: axel-h/ci-actions/repo-checkout@patch-axel-5
       with:
         manifest_repo: sel4bench-manifest
         manifest: master.xml
