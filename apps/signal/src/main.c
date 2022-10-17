@@ -281,7 +281,7 @@ void measure_signal_overhead(seL4_CPtr ntfn, ccnt_t *results)
  * In "Late Processing" flow all the data are processed
  * after all the benchmarks has finished.
  */
-ccnt_t getMinOverhead(ccnt_t overhead[N_RUNS])
+static ccnt_t getMinOverhead(ccnt_t overhead[N_RUNS])
 {
     ccnt_t min = -1;
 
