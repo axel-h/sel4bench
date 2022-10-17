@@ -65,42 +65,18 @@ void low_prio_signal_fn(int argc, char **argv)
     assert(argc == N_LO_SIGNAL_ARGS);
     seL4_CPtr ntfn = (seL4_CPtr) atol(argv[0]);
     volatile ccnt_t *end = (volatile ccnt_t *) atol(argv[1]);
-    ccnt_t *results = (ccnt_t *) atol(argv[2]);
     seL4_CPtr done_ep = (seL4_CPtr) atol(argv[3]);
 
-    for (int i = 0; i < N_RUNS; i++) {
-        ccnt_t start;
-        SEL4BENCH_READ_CCNT(start);
-        DO_REAL_SIGNAL(ntfn);
-        results[i] = (*end - start);
-    }
+#ifdef APP_SIGNAL_EARLY_PROCESSING
 
-    /* signal completion */
-    seL4_Send(done_ep, seL4_MessageInfo_new(0, 0, 0, 0));
-    /* block */
-    seL4_Wait(ntfn, NULL);
-}
-
-/* The same as low_prio_signal_fn, but implements
- * early processing of samples ("Early processing methodology")
- *
- * The methodology accumulates sum of samples and sum of squared samples
- * that allows to calculate standard deviation and mean.
- * Raw samples are dropped.
- */
-void low_prio_signal_early_proc_fn(int argc, char **argv)
-{
-    assert(argc == N_LO_SIGNAL_ARGS);
-    seL4_CPtr ntfn = (seL4_CPtr) atol(argv[0]);
-    volatile ccnt_t *end = (volatile ccnt_t *) atol(argv[1]);
-    signal_results_t *results = (signal_results_t *) atol(argv[2]);
-    seL4_CPtr done_ep = (seL4_CPtr) atol(argv[3]);
-
-    /* The fist N_IGNORED samples are ignored, they are considered to be be part
-     * of the just "warm-up" phase. We avoid memory accesses in the loop, the
-     * only inevitable "load" is reading a volatile variable updated by other
-     * thread.
+    /* The early processing of samples ("Early processing methodology")
+     * accumulates sum of samples and sum of squared samples that allows to
+     * calculate standard deviation and mean. Raw samples are dropped. The fist
+     * N_IGNORED samples are ignored, they are considered to be be part of the
+     * just "warm-up" phase. We avoid memory accesses in the loop, the only
+     * inevitable "load" is reading a volatile variable updated by other thread.
      */
+    signal_results_t *results = (signal_results_t *) atol(argv[2]);
     ccnt_t overhead = results->overhead_min;
     ccnt_t sum = 0; /* sum of samples */
     ccnt_t sum2 = 0; /* sum of squared samples */
@@ -112,10 +88,22 @@ void low_prio_signal_early_proc_fn(int argc, char **argv)
         sum += sample;
         sum2 += sample * sample;
     }
-
     results->lo_sum = sum;
     results->lo_sum2 = sum2;
     results->lo_num = N_RUNS - N_IGNORED;
+
+#else /* not APP_SIGNAL_EARLY_PROCESSING */
+
+    ccnt_t *results = (ccnt_t *) atol(argv[2]);
+
+    for (int i = 0; i < N_RUNS; i++) {
+        ccnt_t start;
+        SEL4BENCH_READ_CCNT(start);
+        DO_REAL_SIGNAL(ntfn);
+        results[i] = (*end - start);
+    }
+
+#endif /* [not] APP_SIGNAL_EARLY_PROCESSING */
 
     /* signal completion */
     seL4_Send(done_ep, seL4_MessageInfo_new(0, 0, 0, 0));
@@ -202,11 +190,6 @@ static void benchmark(env_t *env, seL4_CPtr ep, seL4_CPtr ntfn, signal_results_t
         .fn = (sel4utils_thread_entry_fn) low_prio_signal_fn,
     };
 
-    helper_thread_t signal_early_proc = {
-        .argc = N_LO_SIGNAL_ARGS,
-        .fn = (sel4utils_thread_entry_fn) low_prio_signal_early_proc_fn,
-    };
-
     ccnt_t end;
     UNUSED int error;
 
@@ -215,29 +198,17 @@ static void benchmark(env_t *env, seL4_CPtr ep, seL4_CPtr ntfn, signal_results_t
     /* first benchmark signalling to a higher prio thread */
     benchmark_configure_thread(env, ep, seL4_MaxPrio, "wait", &wait.thread);
     benchmark_configure_thread(env, ep, seL4_MaxPrio - 1, "signal", &signal.thread);
-    benchmark_configure_thread(env, ep, seL4_MaxPrio - 1, "signal early", &signal_early_proc.thread);
 
     sel4utils_create_word_args(wait.argv_strings, wait.argv, wait.argc, ntfn, ep, (seL4_Word) &end);
 
     sel4utils_create_word_args(signal.argv_strings, signal.argv, signal.argc, ntfn,
                                (seL4_Word) &end, (seL4_Word) results->lo_prio_results, ep);
 
-    sel4utils_create_word_args(signal_early_proc.argv_strings, signal_early_proc.argv, signal_early_proc.argc, ntfn,
-                               (seL4_Word) &end, (seL4_Word) results, ep);
-
-    /* Late processing run*/
     start_threads(&signal, &wait);
 
     benchmark_wait_children(ep, "children of notification benchmark", 2);
 
     stop_threads(&signal, &wait);
-
-    /* Early processing run*/
-    start_threads(&signal_early_proc, &wait);
-
-    benchmark_wait_children(ep, "children of notification benchmark", 2);
-
-    stop_threads(&signal_early_proc, &wait);
 
     seL4_CPtr auth = simple_get_tcb(&env->simple);
     /* now benchmark signalling to a lower prio thread */
