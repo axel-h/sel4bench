@@ -54,13 +54,10 @@ set(SCHED ON CACHE BOOL "Application to benchmark seL4 scheduler")
 
 # default is ON
 set(SIGNAL ON CACHE BOOL "Application to benchmark seL4 signals")
+#set(APP_SIGNAL_EARLY_PROCESSING ON CACHE BOOL "use early processing methodology")
 
 # default is ON
 set(MAPPING ON CACHE BOOL "Application to benchmark seL4 mapping a series of pages")
 
 # default is ON
 set(SYNC ON CACHE BOOL "Application to benchmark seL4 sync")
-
-# Allow Early Processing methodology for
-#Signal/"Signal to High Prio Thread" benchmark
-#set(AppSignalEarlyProcessing ON)

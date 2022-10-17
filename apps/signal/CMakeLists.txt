@@ -18,6 +18,13 @@ config_option(
     DEPENDS
     "DefaultBenchDeps"
 )
+config_option(
+    AppSignalEarlyProcessing
+    APP_SIGNAL_EARLY_PROCESSING
+    "Use early processing methodology for 'Signal to High Prio Thread' benchmark"
+    DEFAULT
+    OFF
+)
 add_config_library(sel4benchsignal "${configure_string}")
 
 file(GLOB deps src/*.c)
