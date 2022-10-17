@@ -155,6 +155,12 @@ result_t calculate_results(const size_t n, ccnt_t data[n])
     return result;
 }
 
+/* The function calculates variance using sum, sum of squared values and mean
+ * @param num - number of samples
+ * @param sum - sum of samples
+ * @param sum2 - sum of squared samples
+ * @param mean - mean of the samples
+*/
 static double results_variance_early_proc(const size_t num, const ccnt_t sum,
                                           const ccnt_t sum2, const ccnt_t mean)
 {
