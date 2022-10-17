@@ -155,37 +155,20 @@ result_t calculate_results(const size_t n, ccnt_t data[n])
     return result;
 }
 
-/* The function calculates variance using sum, sum of squared values and mean
- * @param num - number of samples
- * @param sum - sum of samples
- * @param sum2 - sum of squared samples
- * @param mean - mean of the samples
-*/
-static double results_variance_early_proc(const size_t num, const ccnt_t sum,
-                                          const ccnt_t sum2, const ccnt_t mean)
+result_t calculate_results_early_proc(ccnt_t num, ccnt_t sum, ccnt_t sum2, ccnt_t data[num])
 {
-    long double variance = 0;
-    long double dm = mean, dsum = sum, dsum2 = sum2;
-
+    const long double dsum = (long double)sum;
+    const long double dsum2 = (long double)sum2;
+    const long double dmean = dsum / num;
     /* sigma = ( sum(x^2) - 2m*sum(x) + n*m^2 ) / num */
+    const long double variance = (dsum2 - 2 * dmean * dsum + num * dmean * dmean) / num;
+    const long double stddev = sqrt(variance * ((long double)num / (num - 1)));
 
-    variance = (dsum2 - 2 * dm * dsum + num * dm * dm) / num;
-
-    return variance;
-}
-
-result_t calculate_results_early_proc(ccnt_t num, ccnt_t sum, ccnt_t sum2, ccnt_t array[num])
-{
-
-    result_t result;
-
-    memset((void *)&result, 0, sizeof(result));
-    result.mean = sum / num;
-    result.variance = results_variance_early_proc(num, sum, sum2, result.mean);
-    result.stddev = sqrt(result.variance * ((double) num / (double)(num - 1.0f)));;
-    result.raw_data = array;
-    result.samples = num;
-
-    return result;
-
+    return (result_t) {
+        .mean     = (double)dmean,
+        .variance = (double)variance,
+        .stddev   = (double)stddev,
+        .raw_data = data,
+        .samples  = num,
+    };
 }
