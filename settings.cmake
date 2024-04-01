@@ -4,6 +4,10 @@
 # SPDX-License-Identifier: BSD-2-Clause
 #
 
+#
+# dummy change for CI
+#
+
 cmake_minimum_required(VERSION 3.7.2)
 
 set(project_dir "${CMAKE_CURRENT_LIST_DIR}/../..")
